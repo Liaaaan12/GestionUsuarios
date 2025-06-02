@@ -1,9 +1,10 @@
 package GestionUsuarios.GestionUsuarios.controller;
 
+// Corrected imports
+import GestionUsuarios.GestionUsuarios.DTO.PedidoRequestDTO;
+import GestionUsuarios.GestionUsuarios.DTO.PedidoResponseDTO;
+import GestionUsuarios.GestionUsuarios.service.PedidoService;
 
-import com.usuarios.dto.PedidoRequestDTO;
-import com.usuarios.dto.PedidoResponseDTO;
-import com.usuarios.service.PedidoService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

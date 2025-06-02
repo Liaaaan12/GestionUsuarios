@@ -1,14 +1,15 @@
 package GestionUsuarios.GestionUsuarios.service;
 
+// Corrected imports
+import GestionUsuarios.GestionUsuarios.DTO.GerenteTiendaRequestDTO;
+import GestionUsuarios.GestionUsuarios.DTO.GerenteTiendaResponseDTO;
+import GestionUsuarios.GestionUsuarios.exception.ResourceNotFoundException;
+import GestionUsuarios.GestionUsuarios.mapper.GerenteTiendaMapper;
+import GestionUsuarios.GestionUsuarios.model.GerenteTienda;
+import GestionUsuarios.GestionUsuarios.model.TipoUsuario;
+import GestionUsuarios.GestionUsuarios.repository.GerenteTiendaRepository;
+import GestionUsuarios.GestionUsuarios.repository.TipoUsuarioRepository;
 
-import com.usuarios.dto.GerenteTiendaRequestDTO;
-import com.usuarios.dto.GerenteTiendaResponseDTO;
-import com.usuarios.exception.ResourceNotFoundException;
-import com.usuarios.mapper.GerenteTiendaMapper;
-import com.usuarios.model.GerenteTienda;
-import com.usuarios.model.TipoUsuario;
-import com.usuarios.repository.GerenteTiendaRepository;
-import com.usuarios.repository.TipoUsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

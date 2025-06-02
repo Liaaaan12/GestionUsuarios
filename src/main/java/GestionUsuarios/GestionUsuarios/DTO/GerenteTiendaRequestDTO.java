@@ -1,8 +1,11 @@
-package GestionUsuarios.GestionUsuarios.DTO;
+package GestionUsuarios.GestionUsuarios.DTO; // Corrected package
 
-package com.usuarios.dto;
-
-import jakarta.validation.constraints.*;
+// import jakarta.validation.constraints.*; // Already imported via individual imports below
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;

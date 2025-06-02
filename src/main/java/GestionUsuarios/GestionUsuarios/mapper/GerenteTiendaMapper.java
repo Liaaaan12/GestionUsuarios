@@ -1,10 +1,11 @@
 package GestionUsuarios.GestionUsuarios.mapper;
 
+// Corrected imports
+import GestionUsuarios.GestionUsuarios.DTO.GerenteTiendaRequestDTO;
+import GestionUsuarios.GestionUsuarios.DTO.GerenteTiendaResponseDTO;
+import GestionUsuarios.GestionUsuarios.model.GerenteTienda;
+// import GestionUsuarios.GestionUsuarios.model.TipoUsuario; // Already imported by TipoUsuarioMapper
 
-import com.usuarios.dto.GerenteTiendaRequestDTO;
-import com.usuarios.dto.GerenteTiendaResponseDTO;
-import com.usuarios.model.GerenteTienda;
-import com.usuarios.model.TipoUsuario;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 // import org.springframework.security.crypto.password.PasswordEncoder;

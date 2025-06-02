@@ -1,10 +1,11 @@
 package GestionUsuarios.GestionUsuarios.mapper;
 
+// Corrected imports
+import GestionUsuarios.GestionUsuarios.DTO.PedidoRequestDTO;
+import GestionUsuarios.GestionUsuarios.DTO.PedidoResponseDTO;
+import GestionUsuarios.GestionUsuarios.model.Pedido;
+// import GestionUsuarios.GestionUsuarios.model.Cliente; // Referenced by Pedido model
 
-import com.usuarios.dto.PedidoRequestDTO;
-import com.usuarios.dto.PedidoResponseDTO;
-import com.usuarios.model.Pedido;
-import com.usuarios.model.Cliente; // Para la referencia
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
