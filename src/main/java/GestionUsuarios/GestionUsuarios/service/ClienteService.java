@@ -1,18 +1,19 @@
 package GestionUsuarios.GestionUsuarios.service;
 
+// Corrected DTO imports to use uppercase "DTO"
+import GestionUsuarios.GestionUsuarios.DTO.ClienteRequestDTO;
+import GestionUsuarios.GestionUsuarios.DTO.ClienteResponseDTO;
+import GestionUsuarios.GestionUsuarios.exception.ResourceNotFoundException;
+import GestionUsuarios.GestionUsuarios.Mapper.ClienteMapper; // Assuming 'mapper' is the standardized package name
+import GestionUsuarios.GestionUsuarios.model.Cliente;
+import GestionUsuarios.GestionUsuarios.model.TipoUsuario;
+import GestionUsuarios.GestionUsuarios.repository.ClienteRepository;
+import GestionUsuarios.GestionUsuarios.repository.TipoUsuarioRepository;
 
-import com.usuarios.dto.ClienteRequestDTO;
-import com.usuarios.dto.ClienteResponseDTO;
-import com.usuarios.exception.ResourceNotFoundException;
-import com.usuarios.mapper.ClienteMapper;
-import com.usuarios.model.Cliente;
-import com.usuarios.model.TipoUsuario;
-import com.usuarios.repository.ClienteRepository;
-import com.usuarios.repository.TipoUsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-// import org.springframework.security.crypto.password.PasswordEncoder;
+// import org.springframework.security.crypto.password.PasswordEncoder; // Uncomment if using Spring Security for passwords
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,17 +21,21 @@ import java.util.stream.Collectors;
 @Service
 public class ClienteService {
 
-    @Autowired
-    private ClienteRepository clienteRepository;
+    private final ClienteRepository clienteRepository;
+    private final TipoUsuarioRepository tipoUsuarioRepository;
+    private final ClienteMapper clienteMapper;
+    // private final PasswordEncoder passwordEncoder; // Uncomment if using Spring Security
 
     @Autowired
-    private TipoUsuarioRepository tipoUsuarioRepository;
-
-    @Autowired
-    private ClienteMapper clienteMapper;
-
-    // @Autowired
-    // private PasswordEncoder passwordEncoder;
+    public ClienteService(ClienteRepository clienteRepository,
+                          TipoUsuarioRepository tipoUsuarioRepository,
+                          ClienteMapper clienteMapper
+                          /*, PasswordEncoder passwordEncoder */) { // Uncomment if using Spring Security
+        this.clienteRepository = clienteRepository;
+        this.tipoUsuarioRepository = tipoUsuarioRepository;
+        this.clienteMapper = clienteMapper;
+        // this.passwordEncoder = passwordEncoder; // Uncomment if using Spring Security
+    }
 
     @Transactional(readOnly = true)
     public List<ClienteResponseDTO> obtenerTodosLosClientes() {
@@ -53,9 +58,16 @@ public class ClienteService {
 
         Cliente cliente = clienteMapper.toEntity(requestDTO);
         cliente.setTipoUsuario(tipoUsuario);
-        // La contraseña ya debería estar "seteada" (potencialmente hasheada) por el mapper si se implementa allí,
-        // o se hashea aquí si el mapper solo la pasa en texto plano.
-        // Ejemplo: cliente.setPassword(passwordEncoder.encode(requestDTO.getPassword()));
+        // Example of password encoding - ensure PasswordEncoder is configured and injected
+        // if (requestDTO.getPassword() != null && !requestDTO.getPassword().isEmpty()) {
+        //     cliente.setPassword(passwordEncoder.encode(requestDTO.getPassword()));
+        // } else {
+        //     // Handle cases where password might be empty if that's not allowed
+        //     throw new IllegalArgumentException("La contraseña no puede estar vacía.");
+        // }
+        // For now, assuming password comes as is from DTO if not encoding
+        cliente.setPassword(requestDTO.getPassword());
+
 
         Cliente nuevoCliente = clienteRepository.save(cliente);
         return clienteMapper.toResponseDTO(nuevoCliente);
@@ -69,13 +81,19 @@ public class ClienteService {
         TipoUsuario tipoUsuario = tipoUsuarioRepository.findById(requestDTO.getTipoUsuarioId())
                 .orElseThrow(() -> new ResourceNotFoundException("TipoUsuario no encontrado con id: " + requestDTO.getTipoUsuarioId()));
 
+        // Update basic fields from DTO using the mapper
         clienteMapper.updateEntityFromDto(requestDTO, clienteExistente);
-        clienteExistente.setTipoUsuario(tipoUsuario);
+        clienteExistente.setTipoUsuario(tipoUsuario); // Set/update the TipoUsuario association
 
-        // Ejemplo de re-hasheo si la contraseña cambió y el mapper la actualizó:
+        // Handle password update specifically if provided
         // if (requestDTO.getPassword() != null && !requestDTO.getPassword().isEmpty()) {
         //    clienteExistente.setPassword(passwordEncoder.encode(requestDTO.getPassword()));
         // }
+        // For now, assuming password comes as is from DTO if not encoding and mapper handles it
+        if (requestDTO.getPassword() != null && !requestDTO.getPassword().isBlank()) {
+             clienteExistente.setPassword(requestDTO.getPassword()); // Or encode if security is set up
+        }
+
 
         Cliente clienteActualizado = clienteRepository.save(clienteExistente);
         return clienteMapper.toResponseDTO(clienteActualizado);

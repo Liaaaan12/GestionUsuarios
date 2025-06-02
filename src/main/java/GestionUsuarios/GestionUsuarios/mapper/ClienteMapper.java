@@ -1,92 +1,70 @@
-package GestionUsuarios.GestionUsuarios.service;
+package GestionUsuarios.GestionUsuarios.Mapper;
 
-// Corrected imports
 import GestionUsuarios.GestionUsuarios.DTO.ClienteRequestDTO;
 import GestionUsuarios.GestionUsuarios.DTO.ClienteResponseDTO;
-import GestionUsuarios.GestionUsuarios.exception.ResourceNotFoundException;
-import GestionUsuarios.GestionUsuarios.mapper.ClienteMapper;
 import GestionUsuarios.GestionUsuarios.model.Cliente;
-import GestionUsuarios.GestionUsuarios.model.TipoUsuario;
-import GestionUsuarios.GestionUsuarios.repository.ClienteRepository;
-import GestionUsuarios.GestionUsuarios.repository.TipoUsuarioRepository;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-// import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
+// import org.springframework.security.crypto.password.PasswordEncoder; // Para hashear contraseñas
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-@Service
-public class ClienteService {
+@Component
+public class ClienteMapper {
 
     @Autowired
-    private ClienteRepository clienteRepository;
-
-    @Autowired
-    private TipoUsuarioRepository tipoUsuarioRepository;
-
-    @Autowired
-    private ClienteMapper clienteMapper;
+    private TipoUsuarioMapper tipoUsuarioMapper;
 
     // @Autowired
-    // private PasswordEncoder passwordEncoder;
+    // private PasswordEncoder passwordEncoder; // Descomentar si usas Spring Security
 
-    @Transactional(readOnly = true)
-    public List<ClienteResponseDTO> obtenerTodosLosClientes() {
-        return clienteRepository.findAll().stream()
-                .map(clienteMapper::toResponseDTO)
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public ClienteResponseDTO obtenerClientePorId(Long id) {
-        Cliente cliente = clienteRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado con id: " + id));
-        return clienteMapper.toResponseDTO(cliente);
-    }
-
-    @Transactional
-    public ClienteResponseDTO crearCliente(ClienteRequestDTO requestDTO) {
-        TipoUsuario tipoUsuario = tipoUsuarioRepository.findById(requestDTO.getTipoUsuarioId())
-                .orElseThrow(() -> new ResourceNotFoundException("TipoUsuario no encontrado con id: " + requestDTO.getTipoUsuarioId()));
-
-        Cliente cliente = clienteMapper.toEntity(requestDTO);
-        cliente.setTipoUsuario(tipoUsuario);
-        // La contraseña ya debería estar "seteada" (potencialmente hasheada) por el mapper si se implementa allí,
-        // o se hashea aquí si el mapper solo la pasa en texto plano.
-        // Ejemplo: cliente.setPassword(passwordEncoder.encode(requestDTO.getPassword()));
-
-        Cliente nuevoCliente = clienteRepository.save(cliente);
-        return clienteMapper.toResponseDTO(nuevoCliente);
-    }
-
-    @Transactional
-    public ClienteResponseDTO actualizarCliente(Long id, ClienteRequestDTO requestDTO) {
-        Cliente clienteExistente = clienteRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado con id: " + id));
-
-        TipoUsuario tipoUsuario = tipoUsuarioRepository.findById(requestDTO.getTipoUsuarioId())
-                .orElseThrow(() -> new ResourceNotFoundException("TipoUsuario no encontrado con id: " + requestDTO.getTipoUsuarioId()));
-
-        clienteMapper.updateEntityFromDto(requestDTO, clienteExistente);
-        clienteExistente.setTipoUsuario(tipoUsuario);
-
-        // Ejemplo de re-hasheo si la contraseña cambió y el mapper la actualizó:
-        // if (requestDTO.getPassword() != null && !requestDTO.getPassword().isEmpty()) {
-        //    clienteExistente.setPassword(passwordEncoder.encode(requestDTO.getPassword()));
-        // }
-
-        Cliente clienteActualizado = clienteRepository.save(clienteExistente);
-        return clienteMapper.toResponseDTO(clienteActualizado);
-    }
-
-    @Transactional
-    public void eliminarCliente(Long id) {
-        if (!clienteRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Cliente no encontrado con id: " + id);
+    public ClienteResponseDTO toResponseDTO(Cliente cliente) {
+        if (cliente == null) {
+            return null;
         }
-        clienteRepository.deleteById(id);
+        ClienteResponseDTO dto = new ClienteResponseDTO();
+        dto.setId(cliente.getId());
+        dto.setNombre(cliente.getNombre());
+        dto.setEmail(cliente.getEmail());
+        dto.setFechaNacimiento(cliente.getFechaNacimiento());
+        dto.setRut(cliente.getRut());
+        dto.setTipoUsuario(tipoUsuarioMapper.toResponseDTO(cliente.getTipoUsuario()));
+        dto.setDireccionEnvio(cliente.getDireccionEnvio());
+        // La lista de pedidos se omitiría aquí a menos que se quiera una carga profunda por defecto.
+        // dto.setPedidos(cliente.getPedidos().stream().map(pedidoMapper::toResponseDTO).collect(Collectors.toList())); // Necesitaría PedidoMapper
+        return dto;
+    }
+
+    public Cliente toEntity(ClienteRequestDTO requestDTO) {
+        if (requestDTO == null) {
+            return null;
+        }
+        Cliente cliente = new Cliente();
+        cliente.setNombre(requestDTO.getNombre());
+        cliente.setEmail(requestDTO.getEmail());
+        // La contraseña se debe hashear en el servicio antes de guardar
+        // cliente.setPassword(passwordEncoder.encode(requestDTO.getPassword()));
+        cliente.setPassword(requestDTO.getPassword()); // Temporal: guardar como viene
+        cliente.setFechaNacimiento(requestDTO.getFechaNacimiento());
+        cliente.setRut(requestDTO.getRut());
+        cliente.setDireccionEnvio(requestDTO.getDireccionEnvio());
+        // TipoUsuario se establecerá en el servicio después de cargarlo por ID
+        return cliente;
+    }
+
+    public void updateEntityFromDto(ClienteRequestDTO requestDTO, Cliente cliente) {
+        if (requestDTO == null || cliente == null) {
+            return;
+        }
+        cliente.setNombre(requestDTO.getNombre());
+        cliente.setEmail(requestDTO.getEmail());
+
+        if (requestDTO.getPassword() != null && !requestDTO.getPassword().isEmpty()) {
+            // La contraseña se debe hashear en el servicio antes de guardar
+            // cliente.setPassword(passwordEncoder.encode(requestDTO.getPassword()));
+            cliente.setPassword(requestDTO.getPassword()); // Temporal: guardar como viene
+        }
+        cliente.setFechaNacimiento(requestDTO.getFechaNacimiento());
+        cliente.setRut(requestDTO.getRut());
+        cliente.setDireccionEnvio(requestDTO.getDireccionEnvio());
+        // TipoUsuario se actualizará en el servicio
     }
 }
