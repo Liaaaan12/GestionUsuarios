@@ -1,9 +1,12 @@
 package GestionUsuarios.GestionUsuarios.mapper;
 
-import GestionUsuarios.usuarios.dto.ClienteRequestDTO;
-import GestionUsuarios.usuarios.dto.ClienteResponseDTO;
-import GestionUsuarios.usuarios.model.Cliente;
-import GestionUsuarios.usuarios.model.TipoUsuario;
+// Corrected DTO imports
+import GestionUsuarios.GestionUsuarios.DTO.ClienteRequestDTO;
+import GestionUsuarios.GestionUsuarios.DTO.ClienteResponseDTO;
+// Corrected model imports (assuming model is in this package structure)
+import GestionUsuarios.GestionUsuarios.model.Cliente;
+// import GestionUsuarios.GestionUsuarios.model.TipoUsuario; // If needed directly
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 // import org.springframework.security.crypto.password.PasswordEncoder;

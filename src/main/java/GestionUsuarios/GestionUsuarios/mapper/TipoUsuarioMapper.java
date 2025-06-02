@@ -1,8 +1,11 @@
 package GestionUsuarios.GestionUsuarios.mapper;
 
-import com.GestionUsuarios.dto.TipoUsuarioRequestDTO;
-import com.GestionUsuarios.dto.TipoUsuarioResponseDTO;
-import com.GestionUsuarios.model.TipoUsuario;
+// Corrected DTO imports
+import GestionUsuarios.GestionUsuarios.DTO.TipoUsuarioRequestDTO;
+import GestionUsuarios.GestionUsuarios.DTO.TipoUsuarioResponseDTO;
+// Corrected model import (assuming model is in this package structure)
+import GestionUsuarios.GestionUsuarios.model.TipoUsuario;
+
 import org.springframework.stereotype.Component;
 
 @Component

@@ -1,13 +1,19 @@
 package GestionUsuarios.GestionUsuarios.service;
 
-import com.GestionUsuarios.dto.AdministradorRequestDTO;
-import com.GestionUsuarios.dto.AdministradorResponseDTO;
-import com.GestionUsuarios.exception.ResourceNotFoundException;
-import com.GestionUsuarios.mapper.AdministradorMapper;
-import com.GestionUsuarios.model.Administrador;
-import com.GestionUsuarios.model.TipoUsuario;
-import com.GestionUsuarios.repository.AdministradorRepository;
-import com.GestionUsuarios.repository.TipoUsuarioRepository;
+// Corrected DTO imports
+import GestionUsuarios.GestionUsuarios.DTO.AdministradorRequestDTO;
+import GestionUsuarios.GestionUsuarios.DTO.AdministradorResponseDTO;
+// Corrected exception import (assuming exception is in this package structure)
+import GestionUsuarios.GestionUsuarios.exception.ResourceNotFoundException;
+// Corrected mapper import (assuming mapper is in this package structure)
+import GestionUsuarios.GestionUsuarios.mapper.AdministradorMapper;
+// Corrected model imports (assuming model is in this package structure)
+import GestionUsuarios.GestionUsuarios.model.Administrador;
+import GestionUsuarios.GestionUsuarios.model.TipoUsuario;
+// Corrected repository imports (assuming repository is in this package structure)
+import GestionUsuarios.GestionUsuarios.repository.AdministradorRepository;
+import GestionUsuarios.GestionUsuarios.repository.TipoUsuarioRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

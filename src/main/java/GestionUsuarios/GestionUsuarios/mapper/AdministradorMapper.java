@@ -1,9 +1,13 @@
 package GestionUsuarios.GestionUsuarios.mapper;
 
-import com.GestionUsuarios.dto.AdministradorRequestDTO;
-import com.GestionUsuarios.dto.AdministradorResponseDTO;
-import com.GestionUsuarios.model.Administrador;
-import com.GestionUsuarios.model.TipoUsuario;
+// Corrected DTO imports
+import GestionUsuarios.GestionUsuarios.DTO.AdministradorRequestDTO;
+import GestionUsuarios.GestionUsuarios.DTO.AdministradorResponseDTO;
+// Corrected model import (assuming model is in this package structure)
+import GestionUsuarios.GestionUsuarios.model.Administrador;
+// Model import for TipoUsuario will also be needed if not already correctly inferred by TipoUsuarioMapper
+// import GestionUsuarios.GestionUsuarios.model.TipoUsuario;
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
