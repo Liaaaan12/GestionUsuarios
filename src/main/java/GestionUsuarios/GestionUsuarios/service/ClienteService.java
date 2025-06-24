@@ -4,7 +4,7 @@ package GestionUsuarios.GestionUsuarios.service;
 import GestionUsuarios.GestionUsuarios.DTO.ClienteRequestDTO;
 import GestionUsuarios.GestionUsuarios.DTO.ClienteResponseDTO;
 import GestionUsuarios.GestionUsuarios.exception.ResourceNotFoundException;
-import GestionUsuarios.GestionUsuarios.Mapper.ClienteMapper; // Assuming 'mapper' is the standardized package name
+import GestionUsuarios.GestionUsuarios.mapper.ClienteMapper; // Assuming 'mapper' is the standardized package name
 import GestionUsuarios.GestionUsuarios.model.Cliente;
 import GestionUsuarios.GestionUsuarios.model.TipoUsuario;
 import GestionUsuarios.GestionUsuarios.repository.ClienteRepository;

@@ -3,7 +3,7 @@ package GestionUsuarios.GestionUsuarios.service;
 // Corrected DTO imports
 import GestionUsuarios.GestionUsuarios.DTO.AdministradorRequestDTO;
 import GestionUsuarios.GestionUsuarios.DTO.AdministradorResponseDTO;
-import GestionUsuarios.GestionUsuarios.Mapper.AdministradorMapper;
+import GestionUsuarios.GestionUsuarios.mapper.AdministradorMapper;
 // Corrected exception import (assuming exception is in this package structure)
 import GestionUsuarios.GestionUsuarios.exception.ResourceNotFoundException;
 // Corrected model imports (assuming model is in this package structure)

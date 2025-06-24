@@ -3,7 +3,7 @@ package GestionUsuarios.GestionUsuarios.service;
 // Corrected imports
 import GestionUsuarios.GestionUsuarios.DTO.GerenteTiendaRequestDTO;
 import GestionUsuarios.GestionUsuarios.DTO.GerenteTiendaResponseDTO;
-import GestionUsuarios.GestionUsuarios.Mapper.GerenteTiendaMapper;
+import GestionUsuarios.GestionUsuarios.mapper.GerenteTiendaMapper;
 import GestionUsuarios.GestionUsuarios.exception.ResourceNotFoundException;
 import GestionUsuarios.GestionUsuarios.model.GerenteTienda;
 import GestionUsuarios.GestionUsuarios.model.TipoUsuario;

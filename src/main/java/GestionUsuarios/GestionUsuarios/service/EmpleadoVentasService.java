@@ -4,7 +4,7 @@ package GestionUsuarios.GestionUsuarios.service;
 import GestionUsuarios.GestionUsuarios.DTO.EmpleadoVentasRequestDTO;
 import GestionUsuarios.GestionUsuarios.DTO.EmpleadoVentasResponseDTO;
 import GestionUsuarios.GestionUsuarios.exception.ResourceNotFoundException;
-import GestionUsuarios.GestionUsuarios.Mapper.EmpleadoVentasMapper;
+import GestionUsuarios.GestionUsuarios.mapper.EmpleadoVentasMapper;
 import GestionUsuarios.GestionUsuarios.model.EmpleadoVentas;
 import GestionUsuarios.GestionUsuarios.model.TipoUsuario;
 import GestionUsuarios.GestionUsuarios.repository.EmpleadoVentasRepository;

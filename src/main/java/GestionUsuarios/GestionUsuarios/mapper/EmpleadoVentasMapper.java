@@ -1,4 +1,4 @@
-package GestionUsuarios.GestionUsuarios.Mapper;
+package GestionUsuarios.GestionUsuarios.mapper;
 
 // Corrected imports
 import GestionUsuarios.GestionUsuarios.DTO.EmpleadoVentasRequestDTO;

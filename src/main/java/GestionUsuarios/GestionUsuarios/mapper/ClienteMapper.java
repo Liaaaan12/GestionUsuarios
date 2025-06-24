@@ -1,4 +1,4 @@
-package GestionUsuarios.GestionUsuarios.Mapper;
+package GestionUsuarios.GestionUsuarios.mapper;
 
 import GestionUsuarios.GestionUsuarios.DTO.ClienteRequestDTO;
 import GestionUsuarios.GestionUsuarios.DTO.ClienteResponseDTO;
