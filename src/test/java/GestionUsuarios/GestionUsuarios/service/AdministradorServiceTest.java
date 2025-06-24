@@ -2,95 +2,164 @@ package GestionUsuarios.GestionUsuarios.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired; // Importar Autowired
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import GestionUsuarios.GestionUsuarios.DTO.AdministradorRequestDTO;
 import GestionUsuarios.GestionUsuarios.DTO.AdministradorResponseDTO;
+import GestionUsuarios.GestionUsuarios.exception.ResourceNotFoundException;
 import GestionUsuarios.GestionUsuarios.mapper.AdministradorMapper;
 import GestionUsuarios.GestionUsuarios.model.Administrador;
 import GestionUsuarios.GestionUsuarios.model.TipoUsuario;
 import GestionUsuarios.GestionUsuarios.repository.AdministradorRepository;
 import GestionUsuarios.GestionUsuarios.repository.TipoUsuarioRepository;
 
-@SpringBootTest
+@ExtendWith(MockitoExtension.class)
 public class AdministradorServiceTest {
 
-    @MockBean
+    @Mock
     private AdministradorRepository administradorRepository;
 
-    @MockBean
+    @Mock
     private TipoUsuarioRepository tipoUsuarioRepository;
 
-    @MockBean
+    @Mock
     private AdministradorMapper administradorMapper;
 
-    // --- CAMBIO PRINCIPAL AQUÍ ---
-    // Se reemplaza @InjectMocks por @Autowired.
-    // Le pedimos a Spring que nos dé una instancia del servicio
-    // y él se encargará de inyectarle los mocks de arriba.
-    @Autowired
+    @InjectMocks
     private AdministradorService administradorService;
 
-    private Administrador administrador;
+    // --- DATOS DE PRUEBA ---
+    private Administrador administrador1;
+    private AdministradorResponseDTO responseDTO1;
+    private Administrador administrador2;
+    private AdministradorResponseDTO responseDTO2;
     private TipoUsuario tipoUsuario;
     private AdministradorRequestDTO requestDTO;
-    private AdministradorResponseDTO responseDTO;
+    
 
     @BeforeEach
     void setUp() {
-        // Esta línea ya no es necesaria porque Spring se encarga de todo.
-        // MockitoAnnotations.openMocks(this);
-
-        // Preparamos los datos de prueba
         tipoUsuario = new TipoUsuario(1L, "ADMIN");
-        administrador = new Administrador();
-        administrador.setId(1L);
-        administrador.setNombre("Admin de Prueba");
-        administrador.setEmail("admin@test.com");
-        administrador.setRut("12345678-9");
-        administrador.setTipoUsuario(tipoUsuario);
-
         requestDTO = new AdministradorRequestDTO("Admin de Prueba", "admin@test.com", "password", "2000-01-01", "12345678-9", 1L);
+
+        administrador1 = new Administrador();
+        administrador1.setId(1L);
+        administrador1.setNombre("Admin Uno");
+        administrador1.setEmail("admin1@test.com");
+        administrador1.setRut("11111111-1");
+        administrador1.setTipoUsuario(tipoUsuario);
+        responseDTO1 = new AdministradorResponseDTO(1L, "Admin Uno", "admin1@test.com", "2000-01-01", "11111111-1", null);
+
+        administrador2 = new Administrador();
+        administrador2.setId(2L);
+        administrador2.setNombre("Admin Dos");
+        administrador2.setEmail("admin2@test.com");
+        administrador2.setRut("22222222-2");
+        administrador2.setTipoUsuario(tipoUsuario);
+        responseDTO2 = new AdministradorResponseDTO(2L, "Admin Dos", "admin2@test.com", "2000-01-01", "22222222-2", null);
+    }
+
+    @Test
+    void testObtenerTodosLosAdministradores() {
+        List<Administrador> listaDeAdmins = Arrays.asList(administrador1, administrador2);
         
-        responseDTO = new AdministradorResponseDTO(1L, "Admin de Prueba", "admin@test.com", "2000-01-01", "12345678-9", null);
+        when(administradorRepository.findAll()).thenReturn(listaDeAdmins);
+        when(administradorMapper.toResponseDTO(administrador1)).thenReturn(responseDTO1);
+        when(administradorMapper.toResponseDTO(administrador2)).thenReturn(responseDTO2);
+        
+        List<AdministradorResponseDTO> resultado = administradorService.obtenerTodosLosAdministradores();
+
+        assertNotNull(resultado);
+        assertEquals(2, resultado.size());
+        assertEquals("Admin Uno", resultado.get(0).getNombre());
+        assertEquals("Admin Dos", resultado.get(1).getNombre());
     }
 
     @Test
     void testCrearAdministrador() {
-        // Definimos el comportamiento de los mocks
         when(tipoUsuarioRepository.findById(1L)).thenReturn(Optional.of(tipoUsuario));
-        when(administradorMapper.toEntity(any(AdministradorRequestDTO.class))).thenReturn(administrador);
-        when(administradorRepository.save(any(Administrador.class))).thenReturn(administrador);
-        when(administradorMapper.toResponseDTO(any(Administrador.class))).thenReturn(responseDTO);
+        when(administradorMapper.toEntity(any(AdministradorRequestDTO.class))).thenReturn(administrador1);
+        when(administradorRepository.save(any(Administrador.class))).thenReturn(administrador1);
+        when(administradorMapper.toResponseDTO(any(Administrador.class))).thenReturn(responseDTO1);
 
-        // Llamamos al método que queremos probar
         AdministradorResponseDTO resultado = administradorService.crearAdministrador(requestDTO);
 
-        // Verificamos que el resultado es el esperado
         assertNotNull(resultado);
-        assertEquals("Admin de Prueba", resultado.getNombre());
+        assertEquals("Admin Uno", resultado.getNombre());
     }
 
     @Test
     void testObtenerAdministradorPorId() {
-        // Definimos el comportamiento de los mocks
-        when(administradorRepository.findById(1L)).thenReturn(Optional.of(administrador));
-        when(administradorMapper.toResponseDTO(administrador)).thenReturn(responseDTO);
+        when(administradorRepository.findById(1L)).thenReturn(Optional.of(administrador1));
+        when(administradorMapper.toResponseDTO(administrador1)).thenReturn(responseDTO1);
 
-        // Llamamos al método
         AdministradorResponseDTO resultado = administradorService.obtenerAdministradorPorId(1L);
 
-        // Verificamos
         assertNotNull(resultado);
         assertEquals(1L, resultado.getId());
+        assertEquals("Admin Uno", resultado.getNombre());
+    }
+
+    // --- PRUEBA PARA ACTUALIZAR UN ADMINISTRADOR ---
+    @Test
+    void testActualizarAdministrador() {
+        Long adminId = 1L;
+        AdministradorRequestDTO requestActualizado = new AdministradorRequestDTO("Admin Uno Actualizado", "admin1.new@test.com", "newpass", "2001-02-03", "11111111-1", 1L);
+        
+        Administrador adminActualizado = new Administrador();
+        adminActualizado.setId(adminId);
+        adminActualizado.setNombre("Admin Uno Actualizado");
+
+        AdministradorResponseDTO responseActualizado = new AdministradorResponseDTO(adminId, "Admin Uno Actualizado", "admin1.new@test.com", "2001-02-03", "11111111-1", null);
+
+        when(administradorRepository.findById(adminId)).thenReturn(Optional.of(administrador1));
+        when(tipoUsuarioRepository.findById(1L)).thenReturn(Optional.of(tipoUsuario));
+        when(administradorRepository.save(any(Administrador.class))).thenReturn(adminActualizado);
+        when(administradorMapper.toResponseDTO(any(Administrador.class))).thenReturn(responseActualizado);
+        
+        AdministradorResponseDTO resultado = administradorService.actualizarAdministrador(adminId, requestActualizado);
+        
+        assertNotNull(resultado);
+        assertEquals("Admin Uno Actualizado", resultado.getNombre());
+        verify(administradorMapper, times(1)).updateEntityFromDto(requestActualizado, administrador1);
+    }
+
+    // --- PRUEBA PARA ELIMINAR UN ADMINISTRADOR ---
+    @Test
+    void testEliminarAdministrador() {
+        Long adminId = 2L;
+
+        when(administradorRepository.existsById(adminId)).thenReturn(true); 
+        doNothing().when(administradorRepository).deleteById(adminId);
+
+        administradorService.eliminarAdministrador(adminId);
+
+        verify(administradorRepository, times(1)).deleteById(adminId);
+    }
+
+    @Test
+    void testEliminarAdministradorNoEncontrado() {
+        Long adminId = 99L;
+        when(administradorRepository.existsById(adminId)).thenReturn(false);
+
+        assertThrows(ResourceNotFoundException.class, () -> {
+            administradorService.eliminarAdministrador(adminId);
+        });
     }
 }
