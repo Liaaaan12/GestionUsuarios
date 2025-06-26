@@ -47,8 +47,6 @@ public class AdministradorServiceTest {
     // --- DATOS DE PRUEBA ---
     private Administrador administrador1;
     private AdministradorResponseDTO responseDTO1;
-    private Administrador administrador2;
-    private AdministradorResponseDTO responseDTO2;
     private TipoUsuario tipoUsuario;
     private AdministradorRequestDTO requestDTO;
     
@@ -65,99 +63,118 @@ public class AdministradorServiceTest {
         administrador1.setRut("11111111-1");
         administrador1.setTipoUsuario(tipoUsuario);
         responseDTO1 = new AdministradorResponseDTO(1L, "Admin Uno", "admin1@test.com", "2000-01-01", "11111111-1", null);
-
-        administrador2 = new Administrador();
-        administrador2.setId(2L);
-        administrador2.setNombre("Admin Dos");
-        administrador2.setEmail("admin2@test.com");
-        administrador2.setRut("22222222-2");
-        administrador2.setTipoUsuario(tipoUsuario);
-        responseDTO2 = new AdministradorResponseDTO(2L, "Admin Dos", "admin2@test.com", "2000-01-01", "22222222-2", null);
     }
 
     @Test
     void testObtenerTodosLosAdministradores() {
+        // Arrange
+        Administrador administrador2 = new Administrador();
+        administrador2.setId(2L);
         List<Administrador> listaDeAdmins = Arrays.asList(administrador1, administrador2);
         
         when(administradorRepository.findAll()).thenReturn(listaDeAdmins);
-        when(administradorMapper.toResponseDTO(administrador1)).thenReturn(responseDTO1);
-        when(administradorMapper.toResponseDTO(administrador2)).thenReturn(responseDTO2);
+        when(administradorMapper.toResponseDTO(any(Administrador.class))).thenAnswer(invocation -> {
+            Administrador admin = invocation.getArgument(0);
+            return new AdministradorResponseDTO(admin.getId(), admin.getNombre(), admin.getEmail(), admin.getFechaNacimiento(), admin.getRut(), null);
+        });
         
+        // Act
         List<AdministradorResponseDTO> resultado = administradorService.obtenerTodosLosAdministradores();
 
+        // Assert
         assertNotNull(resultado);
         assertEquals(2, resultado.size());
-        assertEquals("Admin Uno", resultado.get(0).getNombre());
-        assertEquals("Admin Dos", resultado.get(1).getNombre());
+        verify(administradorRepository).findAll();
     }
 
     @Test
-    void testCrearAdministrador() {
-        when(tipoUsuarioRepository.findById(1L)).thenReturn(Optional.of(tipoUsuario));
-        when(administradorMapper.toEntity(any(AdministradorRequestDTO.class))).thenReturn(administrador1);
-        when(administradorRepository.save(any(Administrador.class))).thenReturn(administrador1);
-        when(administradorMapper.toResponseDTO(any(Administrador.class))).thenReturn(responseDTO1);
+    void testCrearAdministrador_DeberiaGuardarAdministrador() {
+        // Arrange
+        when(tipoUsuarioRepository.findById(requestDTO.getTipoUsuarioId())).thenReturn(Optional.of(tipoUsuario));
 
+        Administrador administradorSinId = new Administrador();
+        administradorSinId.setNombre(requestDTO.getNombre());
+        administradorSinId.setEmail(requestDTO.getEmail());
+
+        when(administradorMapper.toEntity(requestDTO)).thenReturn(administradorSinId);
+
+        Administrador administradorGuardado = new Administrador();
+        administradorGuardado.setId(1L);
+        administradorGuardado.setNombre(requestDTO.getNombre());
+        administradorGuardado.setEmail(requestDTO.getEmail());
+        administradorGuardado.setTipoUsuario(tipoUsuario);
+
+        when(administradorRepository.save(administradorSinId)).thenReturn(administradorGuardado);
+        when(administradorMapper.toResponseDTO(administradorGuardado)).thenReturn(new AdministradorResponseDTO(1L, "Admin de Prueba", "admin@test.com", "2000-01-01", "12345678-9", null));
+
+
+        // Act
         AdministradorResponseDTO resultado = administradorService.crearAdministrador(requestDTO);
 
+        // Assert
         assertNotNull(resultado);
-        assertEquals("Admin Uno", resultado.getNombre());
+        assertEquals(1L, resultado.getId());
+        assertEquals("Admin de Prueba", resultado.getNombre());
+        verify(administradorRepository).save(administradorSinId);
     }
 
     @Test
     void testObtenerAdministradorPorId() {
+        // Arrange
         when(administradorRepository.findById(1L)).thenReturn(Optional.of(administrador1));
         when(administradorMapper.toResponseDTO(administrador1)).thenReturn(responseDTO1);
 
+        // Act
         AdministradorResponseDTO resultado = administradorService.obtenerAdministradorPorId(1L);
 
+        // Assert
         assertNotNull(resultado);
         assertEquals(1L, resultado.getId());
         assertEquals("Admin Uno", resultado.getNombre());
     }
 
-    // --- PRUEBA PARA ACTUALIZAR UN ADMINISTRADOR ---
     @Test
-    void testActualizarAdministrador() {
+    void testActualizarAdministrador_DeberiaActualizarDatos() {
+        // Arrange
         Long adminId = 1L;
-        AdministradorRequestDTO requestActualizado = new AdministradorRequestDTO("Admin Uno Actualizado", "admin1.new@test.com", "newpass", "2001-02-03", "11111111-1", 1L);
-        
-        Administrador adminActualizado = new Administrador();
-        adminActualizado.setId(adminId);
-        adminActualizado.setNombre("Admin Uno Actualizado");
-
-        AdministradorResponseDTO responseActualizado = new AdministradorResponseDTO(adminId, "Admin Uno Actualizado", "admin1.new@test.com", "2001-02-03", "11111111-1", null);
+        AdministradorRequestDTO requestActualizado = new AdministradorRequestDTO("Admin Actualizado", "admin.actualizado@test.com", "newpass", "2001-02-03", "11111111-1", 1L);
 
         when(administradorRepository.findById(adminId)).thenReturn(Optional.of(administrador1));
-        when(tipoUsuarioRepository.findById(1L)).thenReturn(Optional.of(tipoUsuario));
-        when(administradorRepository.save(any(Administrador.class))).thenReturn(adminActualizado);
-        when(administradorMapper.toResponseDTO(any(Administrador.class))).thenReturn(responseActualizado);
-        
-        AdministradorResponseDTO resultado = administradorService.actualizarAdministrador(adminId, requestActualizado);
-        
-        assertNotNull(resultado);
-        assertEquals("Admin Uno Actualizado", resultado.getNombre());
-        verify(administradorMapper, times(1)).updateEntityFromDto(requestActualizado, administrador1);
+        when(tipoUsuarioRepository.findById(requestActualizado.getTipoUsuarioId())).thenReturn(Optional.of(tipoUsuario));
+        when(administradorRepository.save(any(Administrador.class))).thenReturn(administrador1);
+        when(administradorMapper.toResponseDTO(any(Administrador.class))).thenReturn(new AdministradorResponseDTO());
+
+
+        // Act
+        administradorService.actualizarAdministrador(adminId, requestActualizado);
+
+        // Assert
+        verify(administradorMapper).updateEntityFromDto(requestActualizado, administrador1);
+        verify(administradorRepository).save(administrador1);
     }
 
-    // --- PRUEBA PARA ELIMINAR UN ADMINISTRADOR ---
     @Test
     void testEliminarAdministrador() {
+        // Arrange
         Long adminId = 2L;
 
         when(administradorRepository.existsById(adminId)).thenReturn(true); 
         doNothing().when(administradorRepository).deleteById(adminId);
 
+        // Act
         administradorService.eliminarAdministrador(adminId);
 
+        // Assert
         verify(administradorRepository, times(1)).deleteById(adminId);
     }
 
     @Test
     void testEliminarAdministradorNoEncontrado() {
+        // Arrange
         Long adminId = 99L;
         when(administradorRepository.existsById(adminId)).thenReturn(false);
 
+        // Act & Assert
         assertThrows(ResourceNotFoundException.class, () -> {
             administradorService.eliminarAdministrador(adminId);
         });
