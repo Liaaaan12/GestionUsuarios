@@ -1,26 +1,24 @@
 package GestionUsuarios.GestionUsuarios.service;
 
-// Corrected DTO imports
 import GestionUsuarios.GestionUsuarios.DTO.AdministradorRequestDTO;
 import GestionUsuarios.GestionUsuarios.DTO.AdministradorResponseDTO;
-import GestionUsuarios.GestionUsuarios.mapper.AdministradorMapper;
-// Corrected exception import (assuming exception is in this package structure)
 import GestionUsuarios.GestionUsuarios.exception.ResourceNotFoundException;
-// Corrected model imports (assuming model is in this package structure)
+import GestionUsuarios.GestionUsuarios.mapper.AdministradorMapper;
 import GestionUsuarios.GestionUsuarios.model.Administrador;
 import GestionUsuarios.GestionUsuarios.model.TipoUsuario;
-// Corrected repository imports (assuming repository is in this package structure)
 import GestionUsuarios.GestionUsuarios.repository.AdministradorRepository;
 import GestionUsuarios.GestionUsuarios.repository.TipoUsuarioRepository;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-// import org.springframework.security.crypto.password.PasswordEncoder; // Si usas Spring Security para contraseñas
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Servicio para gestionar la lógica de negocio de los administradores.
+ * Proporciona métodos para crear, leer, actualizar y eliminar administradores.
+ */
 @Service
 public class AdministradorService {
 
@@ -33,9 +31,10 @@ public class AdministradorService {
     @Autowired
     private AdministradorMapper administradorMapper;
 
-    // @Autowired
-    // private PasswordEncoder passwordEncoder; // Descomentar si usas Spring Security
-
+    /**
+     * Obtiene una lista de todos los administradores.
+     * @return Una lista de {@link AdministradorResponseDTO} que representan a todos los administradores.
+     */
     @Transactional(readOnly = true)
     public List<AdministradorResponseDTO> obtenerTodosLosAdministradores() {
         return administradorRepository.findAll()
@@ -44,6 +43,12 @@ public class AdministradorService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Obtiene un administrador por su ID.
+     * @param id El ID del administrador a buscar.
+     * @return El {@link AdministradorResponseDTO} del administrador encontrado.
+     * @throws ResourceNotFoundException si no se encuentra ningún administrador con el ID proporcionado.
+     */
     @Transactional(readOnly = true)
     public AdministradorResponseDTO obtenerAdministradorPorId(Long id) {
         Administrador administrador = administradorRepository.findById(id)
@@ -51,6 +56,12 @@ public class AdministradorService {
         return administradorMapper.toResponseDTO(administrador);
     }
 
+    /**
+     * Crea un nuevo administrador en la base de datos.
+     * @param requestDTO El DTO con la información del administrador a crear.
+     * @return El {@link AdministradorResponseDTO} del administrador recién creado.
+     * @throws ResourceNotFoundException si el tipo de usuario especificado no existe.
+     */
     @Transactional
     public AdministradorResponseDTO crearAdministrador(AdministradorRequestDTO requestDTO) {
         TipoUsuario tipoUsuario = tipoUsuarioRepository.findById(requestDTO.getTipoUsuarioId())
@@ -59,14 +70,17 @@ public class AdministradorService {
         Administrador administrador = administradorMapper.toEntity(requestDTO);
         administrador.setTipoUsuario(tipoUsuario);
 
-        // Hashear contraseña
-        // administrador.setPassword(passwordEncoder.encode(requestDTO.getPassword()));
-        // Por ahora, se guarda la contraseña tal como viene del DTO (mapeada por AdministradorMapper)
-
         Administrador nuevoAdministrador = administradorRepository.save(administrador);
         return administradorMapper.toResponseDTO(nuevoAdministrador);
     }
 
+    /**
+     * Actualiza un administrador existente.
+     * @param id El ID del administrador a actualizar.
+     * @param requestDTO El DTO con los nuevos datos del administrador.
+     * @return El {@link AdministradorResponseDTO} del administrador actualizado.
+     * @throws ResourceNotFoundException si el administrador o el tipo de usuario no se encuentran.
+     */
     @Transactional
     public AdministradorResponseDTO actualizarAdministrador(Long id, AdministradorRequestDTO requestDTO) {
         Administrador administradorExistente = administradorRepository.findById(id)
@@ -78,17 +92,15 @@ public class AdministradorService {
         administradorMapper.updateEntityFromDto(requestDTO, administradorExistente);
         administradorExistente.setTipoUsuario(tipoUsuario);
 
-        // Si la contraseña se actualiza en el DTO, y el mapper ya la puso, se debe re-hashear aquí si es necesario.
-        // Si el mapper no actualiza la contraseña a menos que se provea una nueva, y se hashea allí, está bien.
-        // Asegurar que la contraseña se hashea si se cambia:
-        // if (requestDTO.getPassword() != null && !requestDTO.getPassword().isEmpty()) {
-        //    administradorExistente.setPassword(passwordEncoder.encode(requestDTO.getPassword()));
-        // }
-
         Administrador administradorActualizado = administradorRepository.save(administradorExistente);
         return administradorMapper.toResponseDTO(administradorActualizado);
     }
 
+    /**
+     * Elimina un administrador por su ID.
+     * @param id El ID del administrador a eliminar.
+     * @throws ResourceNotFoundException si el administrador no se encuentra.
+     */
     @Transactional
     public void eliminarAdministrador(Long id) {
         if (!administradorRepository.existsById(id)) {
