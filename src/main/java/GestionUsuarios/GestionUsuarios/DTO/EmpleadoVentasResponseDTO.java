@@ -1,13 +1,16 @@
 package GestionUsuarios.GestionUsuarios.DTO;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import org.springframework.hateoas.RepresentationModel;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class EmpleadoVentasResponseDTO {
+@EqualsAndHashCode(callSuper = true)
+public class EmpleadoVentasResponseDTO extends RepresentationModel<EmpleadoVentasResponseDTO> {
     private Long id;
     private String nombre;
     private String email;

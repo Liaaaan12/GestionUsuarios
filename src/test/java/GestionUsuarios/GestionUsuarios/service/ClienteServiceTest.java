@@ -1,15 +1,10 @@
 package GestionUsuarios.GestionUsuarios.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,151 +29,125 @@ public class ClienteServiceTest {
 
     @Mock
     private ClienteRepository clienteRepository;
-
     @Mock
     private TipoUsuarioRepository tipoUsuarioRepository;
-
     @Mock
     private ClienteMapper clienteMapper;
-
     @InjectMocks
     private ClienteService clienteService;
 
-    // --- DATOS DE PRUEBA ---
-    private Cliente cliente1;
-    private ClienteResponseDTO responseDTO1;
-    private TipoUsuario tipoUsuario;
+    private Cliente cliente;
     private ClienteRequestDTO requestDTO;
-    
+    private ClienteResponseDTO responseDTO;
+    private TipoUsuario tipoUsuario;
 
     @BeforeEach
     void setUp() {
         tipoUsuario = new TipoUsuario(1L, "CLIENTE");
         requestDTO = new ClienteRequestDTO("Cliente de Prueba", "cliente@test.com", "password", "1995-05-10", "22333444-5", 1L, "Calle Falsa 123");
 
-        cliente1 = new Cliente();
-        cliente1.setId(1L);
-        cliente1.setNombre("Cliente Uno");
-        cliente1.setEmail("cliente1@test.com");
-        cliente1.setRut("11222333-4");
-        cliente1.setTipoUsuario(tipoUsuario);
-        cliente1.setDireccionEnvio("Avenida Siempre Viva 742");
+        cliente = new Cliente();
+        cliente.setId(1L);
+        cliente.setNombre("Cliente Uno");
+        cliente.setTipoUsuario(tipoUsuario);
         
-        responseDTO1 = new ClienteResponseDTO(1L, "Cliente Uno", "cliente1@test.com");
+        responseDTO = new ClienteResponseDTO(1L, "Cliente Uno", "cliente1@test.com", "1995-05-10", "22333444-5", null, "Calle Falsa 123");
     }
 
+    // Pruebas para obtenerTodosLosClientes
     @Test
-    void testObtenerTodosLosClientes() {
-        // Arrange
-        Cliente cliente2 = new Cliente();
-        cliente2.setId(2L);
-        List<Cliente> listaDeClientes = Arrays.asList(cliente1, cliente2);
-        
-        when(clienteRepository.findAll()).thenReturn(listaDeClientes);
-        when(clienteMapper.toResponseDTO(any(Cliente.class))).thenAnswer(invocation -> {
-            Cliente cliente = invocation.getArgument(0);
-            return new ClienteResponseDTO(cliente.getId(), cliente.getNombre(), cliente.getEmail());
-        });
-        
-        // Act
+    void testObtenerTodosLosClientes_Exitoso() {
+        when(clienteRepository.findAll()).thenReturn(Collections.singletonList(cliente));
+        when(clienteMapper.toResponseDTO(any(Cliente.class))).thenReturn(responseDTO);
+
         List<ClienteResponseDTO> resultado = clienteService.obtenerTodosLosClientes();
 
-        // Assert
         assertNotNull(resultado);
-        assertEquals(2, resultado.size());
+        assertEquals(1, resultado.size());
         verify(clienteRepository).findAll();
     }
 
+    // Pruebas para obtenerClientePorId
     @Test
-    void testCrearCliente_DeberiaGuardarCliente() {
-        // Arrange
-        when(tipoUsuarioRepository.findById(requestDTO.getTipoUsuarioId())).thenReturn(Optional.of(tipoUsuario));
+    void testObtenerClientePorId_Exitoso() {
+        when(clienteRepository.findById(1L)).thenReturn(Optional.of(cliente));
+        when(clienteMapper.toResponseDTO(cliente)).thenReturn(responseDTO);
 
-        Cliente clienteSinId = new Cliente();
-        clienteSinId.setNombre(requestDTO.getNombre());
-        clienteSinId.setEmail(requestDTO.getEmail());
-
-        when(clienteMapper.toEntity(requestDTO)).thenReturn(clienteSinId);
-
-        Cliente clienteGuardado = new Cliente();
-        clienteGuardado.setId(1L);
-        clienteGuardado.setNombre(requestDTO.getNombre());
-        clienteGuardado.setEmail(requestDTO.getEmail());
-        clienteGuardado.setTipoUsuario(tipoUsuario);
-
-        when(clienteRepository.save(clienteSinId)).thenReturn(clienteGuardado);
-        when(clienteMapper.toResponseDTO(clienteGuardado)).thenReturn(new ClienteResponseDTO(1L, "Cliente de Prueba", "cliente@test.com"));
-
-
-        // Act
-        ClienteResponseDTO resultado = clienteService.crearCliente(requestDTO);
-
-        // Assert
-        assertNotNull(resultado);
-        assertEquals(1L, resultado.getId());
-        assertEquals("Cliente de Prueba", resultado.getNombre());
-        verify(clienteRepository).save(clienteSinId);
-    }
-
-    @Test
-    void testObtenerClientePorId() {
-        // Arrange
-        when(clienteRepository.findById(1L)).thenReturn(Optional.of(cliente1));
-        when(clienteMapper.toResponseDTO(cliente1)).thenReturn(responseDTO1);
-
-        // Act
         ClienteResponseDTO resultado = clienteService.obtenerClientePorId(1L);
 
-        // Assert
         assertNotNull(resultado);
-        assertEquals(1L, resultado.getId());
-        assertEquals("Cliente Uno", resultado.getNombre());
+        assertEquals(responseDTO.getNombre(), resultado.getNombre());
     }
 
     @Test
-    void testActualizarCliente_DeberiaActualizarDatos() {
-        // Arrange
-        Long clienteId = 1L;
-        ClienteRequestDTO requestActualizado = new ClienteRequestDTO("Cliente Actualizado", "cliente.actualizado@test.com", "newpass", "1996-03-04", "11222333-4", 1L, "Nueva Direccion 456");
+    void testObtenerClientePorId_NoEncontrado() {
+        when(clienteRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> clienteService.obtenerClientePorId(99L));
+    }
 
-        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente1));
-        when(tipoUsuarioRepository.findById(requestActualizado.getTipoUsuarioId())).thenReturn(Optional.of(tipoUsuario));
-        when(clienteRepository.save(any(Cliente.class))).thenReturn(cliente1);
-        when(clienteMapper.toResponseDTO(any(Cliente.class))).thenReturn(new ClienteResponseDTO());
+    // Pruebas para crearCliente
+    @Test
+    void testCrearCliente_Exitoso() {
+        when(tipoUsuarioRepository.findById(requestDTO.getTipoUsuarioId())).thenReturn(Optional.of(tipoUsuario));
+        when(clienteMapper.toEntity(any(ClienteRequestDTO.class))).thenReturn(cliente);
+        when(clienteRepository.save(any(Cliente.class))).thenReturn(cliente);
+        when(clienteMapper.toResponseDTO(any(Cliente.class))).thenReturn(responseDTO);
 
+        ClienteResponseDTO resultado = clienteService.crearCliente(requestDTO);
 
-        // Act
-        clienteService.actualizarCliente(clienteId, requestActualizado);
+        assertNotNull(resultado);
+        assertEquals(responseDTO.getNombre(), resultado.getNombre());
+        verify(clienteRepository).save(cliente);
+    }
+    
+    @Test
+    void testCrearCliente_TipoUsuarioNoEncontrado() {
+        when(tipoUsuarioRepository.findById(anyLong())).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> clienteService.crearCliente(requestDTO));
+    }
 
-        // Assert
-        verify(clienteMapper).updateEntityFromDto(requestActualizado, cliente1);
-        verify(clienteRepository).save(cliente1);
+    // Pruebas para actualizarCliente
+    @Test
+    void testActualizarCliente_Exitoso() {
+        when(clienteRepository.findById(1L)).thenReturn(Optional.of(cliente));
+        when(tipoUsuarioRepository.findById(requestDTO.getTipoUsuarioId())).thenReturn(Optional.of(tipoUsuario));
+        when(clienteRepository.save(any(Cliente.class))).thenReturn(cliente);
+        
+        requestDTO.setPassword("newPassword"); // Probando la actualización de contraseña
+        clienteService.actualizarCliente(1L, requestDTO);
+
+        verify(clienteMapper).updateEntityFromDto(requestDTO, cliente);
+        verify(clienteRepository).save(cliente);
+        assertEquals("newPassword", cliente.getPassword());
     }
 
     @Test
-    void testEliminarCliente() {
-        // Arrange
-        Long clienteId = 2L;
+    void testActualizarCliente_ClienteNoEncontrado() {
+        when(clienteRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> clienteService.actualizarCliente(99L, requestDTO));
+    }
+    
+    @Test
+    void testActualizarCliente_TipoUsuarioNoEncontrado() {
+        when(clienteRepository.findById(1L)).thenReturn(Optional.of(cliente));
+        when(tipoUsuarioRepository.findById(anyLong())).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> clienteService.actualizarCliente(1L, requestDTO));
+    }
 
-        when(clienteRepository.existsById(clienteId)).thenReturn(true); 
-        doNothing().when(clienteRepository).deleteById(clienteId);
+    // Pruebas para eliminarCliente
+    @Test
+    void testEliminarCliente_Exitoso() {
+        when(clienteRepository.existsById(1L)).thenReturn(true);
+        doNothing().when(clienteRepository).deleteById(1L);
 
-        // Act
-        clienteService.eliminarCliente(clienteId);
+        clienteService.eliminarCliente(1L);
 
-        // Assert
-        verify(clienteRepository, times(1)).deleteById(clienteId);
+        verify(clienteRepository, times(1)).deleteById(1L);
     }
 
     @Test
-    void testEliminarClienteNoEncontrado() {
-        // Arrange
-        Long clienteId = 99L;
-        when(clienteRepository.existsById(clienteId)).thenReturn(false);
-
-        // Act & Assert
-        assertThrows(ResourceNotFoundException.class, () -> {
-            clienteService.eliminarCliente(clienteId);
-        });
+    void testEliminarCliente_NoEncontrado() {
+        when(clienteRepository.existsById(99L)).thenReturn(false);
+        assertThrows(ResourceNotFoundException.class, () -> clienteService.eliminarCliente(99L));
     }
 }

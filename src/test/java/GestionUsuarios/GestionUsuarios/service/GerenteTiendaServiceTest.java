@@ -1,15 +1,10 @@
 package GestionUsuarios.GestionUsuarios.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,148 +29,123 @@ public class GerenteTiendaServiceTest {
 
     @Mock
     private GerenteTiendaRepository gerenteTiendaRepository;
-
     @Mock
     private TipoUsuarioRepository tipoUsuarioRepository;
-
     @Mock
     private GerenteTiendaMapper gerenteTiendaMapper;
-
     @InjectMocks
     private GerenteTiendaService gerenteTiendaService;
 
-    // --- DATOS DE PRUEBA ---
-    private GerenteTienda gerente1;
-    private GerenteTiendaResponseDTO responseDTO1;
-    private TipoUsuario tipoUsuario;
+    private GerenteTienda gerente;
     private GerenteTiendaRequestDTO requestDTO;
-    
+    private GerenteTiendaResponseDTO responseDTO;
+    private TipoUsuario tipoUsuario;
 
     @BeforeEach
     void setUp() {
         tipoUsuario = new TipoUsuario(3L, "GERENTE");
         requestDTO = new GerenteTiendaRequestDTO("Gerente de Prueba", "gerente@test.com", "password", "1985-03-15", "11222333-k", 3L, 5, "Tienda Central");
 
-        gerente1 = new GerenteTienda();
-        gerente1.setId(1L);
-        gerente1.setNombre("Gerente Uno");
-        gerente1.setEmail("gerente1@test.com");
-        gerente1.setRut("12345678-9");
-        gerente1.setTipoUsuario(tipoUsuario);
-        
-        responseDTO1 = new GerenteTiendaResponseDTO(1L, "Gerente Uno", "gerente1@test.com", "1980-01-01", "12345678-9", null, 10, "Tienda Norte");
+        gerente = new GerenteTienda();
+        gerente.setId(1L);
+        gerente.setNombre("Gerente Uno");
+        gerente.setTipoUsuario(tipoUsuario);
+
+        responseDTO = new GerenteTiendaResponseDTO(1L, "Gerente Uno", "gerente1@test.com", "1980-01-01", "12345678-9", null, 10, "Tienda Norte");
     }
 
+    // Pruebas para obtenerTodosLosGerentes
     @Test
-    void testObtenerTodosLosGerentes() {
-        // Arrange
-        GerenteTienda gerente2 = new GerenteTienda();
-        gerente2.setId(2L);
-        List<GerenteTienda> listaDeGerentes = Arrays.asList(gerente1, gerente2);
-        
-        when(gerenteTiendaRepository.findAll()).thenReturn(listaDeGerentes);
-        when(gerenteTiendaMapper.toResponseDTO(any(GerenteTienda.class))).thenAnswer(invocation -> {
-            GerenteTienda gerente = invocation.getArgument(0);
-            return new GerenteTiendaResponseDTO(gerente.getId(), gerente.getNombre(), gerente.getEmail(), null, null, null, null, null);
-        });
-        
-        // Act
+    void testObtenerTodosLosGerentes_Exitoso() {
+        when(gerenteTiendaRepository.findAll()).thenReturn(Collections.singletonList(gerente));
+        when(gerenteTiendaMapper.toResponseDTO(any(GerenteTienda.class))).thenReturn(responseDTO);
+
         List<GerenteTiendaResponseDTO> resultado = gerenteTiendaService.obtenerTodosLosGerentes();
 
-        // Assert
         assertNotNull(resultado);
-        assertEquals(2, resultado.size());
+        assertEquals(1, resultado.size());
         verify(gerenteTiendaRepository).findAll();
     }
 
+    // Pruebas para obtenerGerentePorId
     @Test
-    void testCrearGerente_DeberiaGuardarGerente() {
-        // Arrange
-        when(tipoUsuarioRepository.findById(requestDTO.getTipoUsuarioId())).thenReturn(Optional.of(tipoUsuario));
+    void testObtenerGerentePorId_Exitoso() {
+        when(gerenteTiendaRepository.findById(1L)).thenReturn(Optional.of(gerente));
+        when(gerenteTiendaMapper.toResponseDTO(gerente)).thenReturn(responseDTO);
 
-        GerenteTienda gerenteSinId = new GerenteTienda();
-        gerenteSinId.setNombre(requestDTO.getNombre());
-        
-        when(gerenteTiendaMapper.toEntity(requestDTO)).thenReturn(gerenteSinId);
-
-        GerenteTienda gerenteGuardado = new GerenteTienda();
-        gerenteGuardado.setId(1L);
-        gerenteGuardado.setNombre(requestDTO.getNombre());
-        gerenteGuardado.setTipoUsuario(tipoUsuario);
-
-        when(gerenteTiendaRepository.save(gerenteSinId)).thenReturn(gerenteGuardado);
-        when(gerenteTiendaMapper.toResponseDTO(gerenteGuardado)).thenReturn(new GerenteTiendaResponseDTO(1L, "Gerente de Prueba", "gerente@test.com", null, null, null, null, null));
-
-
-        // Act
-        GerenteTiendaResponseDTO resultado = gerenteTiendaService.crearGerente(requestDTO);
-
-        // Assert
-        assertNotNull(resultado);
-        assertEquals(1L, resultado.getId());
-        assertEquals("Gerente de Prueba", resultado.getNombre());
-        verify(gerenteTiendaRepository).save(gerenteSinId);
-    }
-
-    @Test
-    void testObtenerGerentePorId() {
-        // Arrange
-        when(gerenteTiendaRepository.findById(1L)).thenReturn(Optional.of(gerente1));
-        when(gerenteTiendaMapper.toResponseDTO(gerente1)).thenReturn(responseDTO1);
-
-        // Act
         GerenteTiendaResponseDTO resultado = gerenteTiendaService.obtenerGerentePorId(1L);
 
-        // Assert
         assertNotNull(resultado);
-        assertEquals(1L, resultado.getId());
-        assertEquals("Gerente Uno", resultado.getNombre());
+        assertEquals(responseDTO.getNombre(), resultado.getNombre());
     }
 
     @Test
-    void testActualizarGerente_DeberiaActualizarDatos() {
-        // Arrange
-        Long gerenteId = 1L;
-        GerenteTiendaRequestDTO requestActualizado = new GerenteTiendaRequestDTO("Gerente Actualizado", "gerente.actualizado@test.com", "newpass", "1986-04-16", "11222333-k", 3L, 6, "Tienda Sur");
+    void testObtenerGerentePorId_NoEncontrado() {
+        when(gerenteTiendaRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> gerenteTiendaService.obtenerGerentePorId(99L));
+    }
 
-        when(gerenteTiendaRepository.findById(gerenteId)).thenReturn(Optional.of(gerente1));
-        when(tipoUsuarioRepository.findById(requestActualizado.getTipoUsuarioId())).thenReturn(Optional.of(tipoUsuario));
-        when(gerenteTiendaRepository.save(any(GerenteTienda.class))).thenReturn(gerente1);
-        when(gerenteTiendaMapper.toResponseDTO(any(GerenteTienda.class))).thenReturn(new GerenteTiendaResponseDTO());
+    // Pruebas para crearGerente
+    @Test
+    void testCrearGerente_Exitoso() {
+        when(tipoUsuarioRepository.findById(requestDTO.getTipoUsuarioId())).thenReturn(Optional.of(tipoUsuario));
+        when(gerenteTiendaMapper.toEntity(any(GerenteTiendaRequestDTO.class))).thenReturn(gerente);
+        when(gerenteTiendaRepository.save(any(GerenteTienda.class))).thenReturn(gerente);
+        when(gerenteTiendaMapper.toResponseDTO(any(GerenteTienda.class))).thenReturn(responseDTO);
 
+        GerenteTiendaResponseDTO resultado = gerenteTiendaService.crearGerente(requestDTO);
 
-        // Act
-        gerenteTiendaService.actualizarGerente(gerenteId, requestActualizado);
+        assertNotNull(resultado);
+        assertEquals(responseDTO.getNombre(), resultado.getNombre());
+        verify(gerenteTiendaRepository).save(gerente);
+    }
+    
+    @Test
+    void testCrearGerente_TipoUsuarioNoEncontrado() {
+        when(tipoUsuarioRepository.findById(anyLong())).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> gerenteTiendaService.crearGerente(requestDTO));
+    }
 
-        // Assert
-        verify(gerenteTiendaMapper).updateEntityFromDto(requestActualizado, gerente1);
-        verify(gerenteTiendaRepository).save(gerente1);
+    // Pruebas para actualizarGerente
+    @Test
+    void testActualizarGerente_Exitoso() {
+        when(gerenteTiendaRepository.findById(1L)).thenReturn(Optional.of(gerente));
+        when(tipoUsuarioRepository.findById(requestDTO.getTipoUsuarioId())).thenReturn(Optional.of(tipoUsuario));
+        when(gerenteTiendaRepository.save(any(GerenteTienda.class))).thenReturn(gerente);
+        
+        gerenteTiendaService.actualizarGerente(1L, requestDTO);
+
+        verify(gerenteTiendaMapper).updateEntityFromDto(requestDTO, gerente);
+        verify(gerenteTiendaRepository).save(gerente);
     }
 
     @Test
-    void testEliminarGerente() {
-        // Arrange
-        Long gerenteId = 2L;
+    void testActualizarGerente_GerenteNoEncontrado() {
+        when(gerenteTiendaRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> gerenteTiendaService.actualizarGerente(99L, requestDTO));
+    }
+    
+    @Test
+    void testActualizarGerente_TipoUsuarioNoEncontrado() {
+        when(gerenteTiendaRepository.findById(1L)).thenReturn(Optional.of(gerente));
+        when(tipoUsuarioRepository.findById(anyLong())).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> gerenteTiendaService.actualizarGerente(1L, requestDTO));
+    }
 
-        when(gerenteTiendaRepository.existsById(gerenteId)).thenReturn(true); 
-        doNothing().when(gerenteTiendaRepository).deleteById(gerenteId);
+    // Pruebas para eliminarGerente
+    @Test
+    void testEliminarGerente_Exitoso() {
+        when(gerenteTiendaRepository.existsById(1L)).thenReturn(true);
+        doNothing().when(gerenteTiendaRepository).deleteById(1L);
 
-        // Act
-        gerenteTiendaService.eliminarGerente(gerenteId);
+        gerenteTiendaService.eliminarGerente(1L);
 
-        // Assert
-        verify(gerenteTiendaRepository, times(1)).deleteById(gerenteId);
+        verify(gerenteTiendaRepository, times(1)).deleteById(1L);
     }
 
     @Test
-    void testEliminarGerenteNoEncontrado() {
-        // Arrange
-        Long gerenteId = 99L;
-        when(gerenteTiendaRepository.existsById(gerenteId)).thenReturn(false);
-
-        // Act & Assert
-        assertThrows(ResourceNotFoundException.class, () -> {
-            gerenteTiendaService.eliminarGerente(gerenteId);
-        });
+    void testEliminarGerente_NoEncontrado() {
+        when(gerenteTiendaRepository.existsById(99L)).thenReturn(false);
+        assertThrows(ResourceNotFoundException.class, () -> gerenteTiendaService.eliminarGerente(99L));
     }
 }

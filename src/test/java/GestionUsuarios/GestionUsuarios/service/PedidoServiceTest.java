@@ -1,16 +1,11 @@
 package GestionUsuarios.GestionUsuarios.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,7 +16,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import GestionUsuarios.GestionUsuarios.DTO.ClienteResponseDTO;
 import GestionUsuarios.GestionUsuarios.DTO.PedidoRequestDTO;
 import GestionUsuarios.GestionUsuarios.DTO.PedidoResponseDTO;
 import GestionUsuarios.GestionUsuarios.exception.ResourceNotFoundException;
@@ -36,22 +30,17 @@ public class PedidoServiceTest {
 
     @Mock
     private PedidoRepository pedidoRepository;
-
     @Mock
     private ClienteRepository clienteRepository;
-
     @Mock
     private PedidoMapper pedidoMapper;
-
     @InjectMocks
     private PedidoService pedidoService;
 
-    // --- DATOS DE PRUEBA ---
-    private Pedido pedido1;
+    private Pedido pedido;
     private Cliente cliente;
-    private PedidoResponseDTO responseDTO1;
     private PedidoRequestDTO requestDTO;
-    
+    private PedidoResponseDTO responseDTO;
 
     @BeforeEach
     void setUp() {
@@ -61,138 +50,123 @@ public class PedidoServiceTest {
 
         requestDTO = new PedidoRequestDTO("Pendiente", 150.99, 1L, "Calle Falsa 123", "Tarjeta de Crédito");
 
-        pedido1 = new Pedido();
-        pedido1.setId(1L);
-        pedido1.setEstado("Entregado");
-        pedido1.setTotal(200.50);
-        pedido1.setCliente(cliente);
-        pedido1.setFechaPedido(LocalDateTime.now());
-        
-        ClienteResponseDTO clienteResponse = new ClienteResponseDTO(cliente.getId(), cliente.getNombre(), "cliente@test.com");
-        responseDTO1 = new PedidoResponseDTO(1L, LocalDateTime.now(), "Entregado", 200.50, clienteResponse, "Calle Falsa 123", "Tarjeta");
+        pedido = new Pedido();
+        pedido.setId(1L);
+        pedido.setEstado("Entregado");
+        pedido.setCliente(cliente);
+
+        responseDTO = new PedidoResponseDTO(1L, LocalDateTime.now(), "Entregado", 200.50, null, "Calle Falsa 123", "Tarjeta");
     }
 
+    // Pruebas para obtenerTodosLosPedidos
     @Test
-    void testObtenerTodosLosPedidos() {
-        // Arrange
-        Pedido pedido2 = new Pedido();
-        pedido2.setId(2L);
-        List<Pedido> listaDePedidos = Arrays.asList(pedido1, pedido2);
-        
-        when(pedidoRepository.findAll()).thenReturn(listaDePedidos);
-        when(pedidoMapper.toResponseDTO(any(Pedido.class))).thenAnswer(invocation -> {
-            Pedido pedido = invocation.getArgument(0);
-            return new PedidoResponseDTO(pedido.getId(), pedido.getFechaPedido(), pedido.getEstado(), pedido.getTotal(), null, null, null);
-        });
-        
-        // Act
+    void testObtenerTodosLosPedidos_Exitoso() {
+        when(pedidoRepository.findAll()).thenReturn(Collections.singletonList(pedido));
+        when(pedidoMapper.toResponseDTO(any(Pedido.class))).thenReturn(responseDTO);
+
         List<PedidoResponseDTO> resultado = pedidoService.obtenerTodosLosPedidos();
 
-        // Assert
         assertNotNull(resultado);
-        assertEquals(2, resultado.size());
+        assertEquals(1, resultado.size());
         verify(pedidoRepository).findAll();
     }
 
+    // Pruebas para obtenerPedidoPorId
     @Test
-    void testCrearPedido_DeberiaGuardarPedido() {
-        // Arrange
-        when(clienteRepository.findById(requestDTO.getClienteId())).thenReturn(Optional.of(cliente));
+    void testObtenerPedidoPorId_Exitoso() {
+        when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
+        when(pedidoMapper.toResponseDTO(pedido)).thenReturn(responseDTO);
 
-        Pedido pedidoSinId = new Pedido();
-        pedidoSinId.setEstado(requestDTO.getEstado());
-        
-        when(pedidoMapper.toEntity(requestDTO)).thenReturn(pedidoSinId);
-
-        Pedido pedidoGuardado = new Pedido();
-        pedidoGuardado.setId(1L);
-        pedidoGuardado.setEstado(requestDTO.getEstado());
-        pedidoGuardado.setCliente(cliente);
-
-        when(pedidoRepository.save(pedidoSinId)).thenReturn(pedidoGuardado);
-        when(pedidoMapper.toResponseDTO(pedidoGuardado)).thenReturn(new PedidoResponseDTO(1L, LocalDateTime.now(), "Pendiente", 150.99, null, null, null));
-
-
-        // Act
-        PedidoResponseDTO resultado = pedidoService.crearPedido(requestDTO);
-
-        // Assert
-        assertNotNull(resultado);
-        assertEquals(1L, resultado.getId());
-        assertEquals("Pendiente", resultado.getEstado());
-        verify(pedidoRepository).save(pedidoSinId);
-    }
-
-    @Test
-    void testCrearPedido_CuandoClienteNoExiste_DeberiaLanzarExcepcion() {
-        // Arrange
-        when(clienteRepository.findById(99L)).thenReturn(Optional.empty());
-        PedidoRequestDTO requestConClienteInexistente = new PedidoRequestDTO("Pendiente", 100.0, 99L, "Direccion", "Efectivo");
-
-        // Act & Assert
-        assertThrows(ResourceNotFoundException.class, () -> {
-            pedidoService.crearPedido(requestConClienteInexistente);
-        });
-    }
-
-    @Test
-    void testObtenerPedidoPorId() {
-        // Arrange
-        when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido1));
-        when(pedidoMapper.toResponseDTO(pedido1)).thenReturn(responseDTO1);
-
-        // Act
         PedidoResponseDTO resultado = pedidoService.obtenerPedidoPorId(1L);
 
-        // Assert
         assertNotNull(resultado);
-        assertEquals(1L, resultado.getId());
-        assertEquals("Entregado", resultado.getEstado());
+        assertEquals(responseDTO.getEstado(), resultado.getEstado());
     }
 
     @Test
-    void testActualizarPedido_DeberiaActualizarDatos() {
-        // Arrange
-        Long pedidoId = 1L;
-        PedidoRequestDTO requestActualizado = new PedidoRequestDTO("Enviado", 155.00, 1L, "Nueva Direccion 456", "PayPal");
+    void testObtenerPedidoPorId_NoEncontrado() {
+        when(pedidoRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> pedidoService.obtenerPedidoPorId(99L));
+    }
 
-        when(pedidoRepository.findById(pedidoId)).thenReturn(Optional.of(pedido1));
-        when(pedidoRepository.save(any(Pedido.class))).thenReturn(pedido1);
-        when(pedidoMapper.toResponseDTO(any(Pedido.class))).thenReturn(new PedidoResponseDTO());
+    // Pruebas para crearPedido
+    @Test
+    void testCrearPedido_Exitoso() {
+        when(clienteRepository.findById(requestDTO.getClienteId())).thenReturn(Optional.of(cliente));
+        when(pedidoMapper.toEntity(any(PedidoRequestDTO.class))).thenReturn(pedido);
+        when(pedidoRepository.save(any(Pedido.class))).thenReturn(pedido);
+        when(pedidoMapper.toResponseDTO(any(Pedido.class))).thenReturn(responseDTO);
 
+        PedidoResponseDTO resultado = pedidoService.crearPedido(requestDTO);
 
-        // Act
-        pedidoService.actualizarPedido(pedidoId, requestActualizado);
+        assertNotNull(resultado);
+        assertEquals(responseDTO.getEstado(), resultado.getEstado());
+        verify(pedidoRepository).save(pedido);
+    }
+    
+    @Test
+    void testCrearPedido_ClienteNoEncontrado() {
+        when(clienteRepository.findById(anyLong())).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> pedidoService.crearPedido(requestDTO));
+    }
 
-        // Assert
-        verify(pedidoMapper).updateEntityFromDto(requestActualizado, pedido1);
-        verify(pedidoRepository).save(pedido1);
+    // Pruebas para actualizarPedido
+    @Test
+    void testActualizarPedido_Exitoso() {
+        when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
+        when(pedidoRepository.save(any(Pedido.class))).thenReturn(pedido);
+        
+        pedidoService.actualizarPedido(1L, requestDTO);
+
+        verify(pedidoMapper).updateEntityFromDto(requestDTO, pedido);
+        verify(pedidoRepository).save(pedido);
     }
 
     @Test
-    void testEliminarPedido() {
-        // Arrange
-        Long pedidoId = 2L;
+    void testActualizarPedido_CambiandoCliente_Exitoso() {
+        Cliente nuevoCliente = new Cliente();
+        nuevoCliente.setId(2L);
+        requestDTO.setClienteId(2L); // Cambiar el ID del cliente en el DTO
 
-        when(pedidoRepository.existsById(pedidoId)).thenReturn(true); 
-        doNothing().when(pedidoRepository).deleteById(pedidoId);
+        when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
+        when(clienteRepository.findById(2L)).thenReturn(Optional.of(nuevoCliente));
+        when(pedidoRepository.save(any(Pedido.class))).thenReturn(pedido);
+        
+        pedidoService.actualizarPedido(1L, requestDTO);
 
-        // Act
-        pedidoService.eliminarPedido(pedidoId);
-
-        // Assert
-        verify(pedidoRepository, times(1)).deleteById(pedidoId);
+        verify(pedidoRepository).save(pedido);
+        assertEquals(2L, pedido.getCliente().getId());
     }
 
     @Test
-    void testEliminarPedidoNoEncontrado() {
-        // Arrange
-        Long pedidoId = 99L;
-        when(pedidoRepository.existsById(pedidoId)).thenReturn(false);
+    void testActualizarPedido_PedidoNoEncontrado() {
+        when(pedidoRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> pedidoService.actualizarPedido(99L, requestDTO));
+    }
+    
+    @Test
+    void testActualizarPedido_NuevoClienteNoEncontrado() {
+        requestDTO.setClienteId(99L); // ID de un cliente que no existe
+        when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
+        when(clienteRepository.findById(99L)).thenReturn(Optional.empty());
+        
+        assertThrows(ResourceNotFoundException.class, () -> pedidoService.actualizarPedido(1L, requestDTO));
+    }
 
-        // Act & Assert
-        assertThrows(ResourceNotFoundException.class, () -> {
-            pedidoService.eliminarPedido(pedidoId);
-        });
+    // Pruebas para eliminarPedido
+    @Test
+    void testEliminarPedido_Exitoso() {
+        when(pedidoRepository.existsById(1L)).thenReturn(true);
+        doNothing().when(pedidoRepository).deleteById(1L);
+
+        pedidoService.eliminarPedido(1L);
+
+        verify(pedidoRepository, times(1)).deleteById(1L);
+    }
+
+    @Test
+    void testEliminarPedido_NoEncontrado() {
+        when(pedidoRepository.existsById(99L)).thenReturn(false);
+        assertThrows(ResourceNotFoundException.class, () -> pedidoService.eliminarPedido(99L));
     }
 }
